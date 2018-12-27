@@ -11,5 +11,17 @@
   "dependencies": {
     "minimist": "^1.2.0",
     "recursive-readdir": "^2.2.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamutils/morphmerger.git"
+  },
+  "keywords": [
+    "VAM",
+    "Morph"
+  ],
+  "bugs": {
+    "url": "https://github.com/vamutils/morphmerger/issues"
+  },
+  "homepage": "https://github.com/vamutils/morphmerger#readme"
 }
