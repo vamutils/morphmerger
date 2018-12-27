@@ -1,0 +1,1 @@
+Dumps from UABE go here.  Dump all 'MonoBehaviour' items from 'vam/Streaming Assets/f_mb' to .txt format here.

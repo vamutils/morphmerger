@@ -1,0 +1,15 @@
+{
+  "name": "vam-morphmerge",
+  "version": "1.0.0",
+  "description": "Merge VAM Look Morphs to a new single Morph",
+  "main": "merge.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "recursive-readdir": "^2.2.2"
+  }
+}
