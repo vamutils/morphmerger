@@ -51,14 +51,14 @@ The script will also write out a new Look file of the same name as the morph fil
 Usage: node merge.js [options]
 
 Options:
- --vambase VAMPATH\t Required, specifies base VAM path.
- --inputfile INPUTFILE\t Required, specifies input Look .json file to evaluate
- --outputmorph OUTPUTMORPH\t Required, specifies your output morph file name.
+ --vambase VAMPATH Required, specifies base VAM path.
+ --inputfile INPUTFILE Required, specifies input Look .json file to evaluate
+ --outputmorph OUTPUTMORPH Required, specifies your output morph file name.
     Do not leave use a file extension.  A.dsf Morph and starter .json Look will be created for you.
- --vammorphpath VAMMORPHPATH\t Optional, specified path to Standard VAM morph JSON extracts
- --looksubfolder LOOKSUBFOLDER\t Optional, specifies subfolder name within '\Saves\Person\appearance' to place new Look containing merged morph
- --morphsubfolder MORPHSUBFOLDER\t Optional, specifies subfolder name within '\Import\morphs\female' to place your merged morph
- --author AUTHOR\t Optional, specifies your name, otherwise you are John Doe.
+ --vammorphpath VAMMORPHPATH Optional, specified path to Standard VAM morph JSON extracts
+ --looksubfolder LOOKSUBFOLDER Optional, specifies subfolder name within '\Saves\Person\appearance' to place new Look containing merged morph
+ --morphsubfolder MORPHSUBFOLDER Optional, specifies subfolder name within '\Import\morphs\female' to place your merged morph
+ --author AUTHOR Optional, specifies your name, otherwise you are John Doe.
 
 *Note:* See extractMorphs.js for details on extracting VAM Morph information.  DO NOT distribute extracted standard morphs.
 *Note 2:* This morph merger is not intended to work with Genetalia morphs, as they are on a different graft.
