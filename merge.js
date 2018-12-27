@@ -22,9 +22,9 @@ const usage = ()=>{
 		" --author AUTHOR\t Optional, specifies your name, otherwise you are John Doe.",
 		"",
 		"*Note: See extractMorphs.js for details on extracting VAM Morph information.  DO NOT distribute extracted standard morphs.",
-		"Note 2: This morph merger is not intended to work with Genetalia morphs, as they are on a different graft."
+		"Note 2: This morph merger is not intended to work with Genetalia morphs, as they are on a different graft.",
 		""
-		].join("\n"));
+		].join("\r\n"));
 }
 
 if(!argv.inputfile || !argv.outputmorph || !argv.vambase){

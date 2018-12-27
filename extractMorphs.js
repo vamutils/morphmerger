@@ -7,7 +7,7 @@ argv = require('minimist')(process.argv.slice(2));
 const usage = ()=>{
 	console.log([
 		"",
-		"This OPTIONAL script will parse a UABE .txt dump of the MonoBehaviour entries in '[vaminstallpath]\VAM_Data\StreamingAssets\f_mb'",
+		"This OPTIONAL script will parse a UABE .txt dump of the MonoBehaviour entries in '[vaminstallpath]\\VAM_Data\\StreamingAssets\\f_mb'",
 		"The parsed results are stored in individual .json files containing the necessary vertex and formula information needed in order to use Standard VAM morphs",
 		"If you opt not to use these .json files, the morph merger program will ignore Standard Morphs and not merge them, leaving the Standard morph values in the new Look file",
 		"",
@@ -21,7 +21,7 @@ const usage = ()=>{
 		"",
 		"You can download Unity Assets Bundle Extractor here: https://github.com/DerPopo/UABE/releases",
 		""
-		].join("\n"));
+		].join("\r\n"));
 }
 
 if(!argv.dumpfolder || !argv.outputfolder){
