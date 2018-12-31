@@ -15,17 +15,20 @@ const usage = ()=>{
 		" --vambase VAMPATH\t Required, specifies base VAM path.",
 		" --inputfile INPUTFILE\t Required, specifies input Look .json file to evaluate",
 		" --outputmorph OUTPUTMORPH\t Required, specifies your output morph file name.",
-		"    Do not leave use a file extension.  A.dsf Morph and starter .json Look will be created for you.",
+		"    Do not use a file extension. A .dsf Morph and .json Look will be created for you.",
+		" --gender male/female\t Optional, specify your output morphs gender.  Default is female.",
+		" --bakeformulas true/false\t Optional, specify whether you want to bake in morph value formulas.  Default is false.",
 		" --vammorphpath VAMMORPHPATH\t Optional, specified path to Standard VAM morph JSON extracts*",
-		" --looksubfolder LOOKSUBFOLDER\t Optional, specifies subfolder name within '\Saves\Person\appearance' to place new Look containing merged morph",
-		" --morphsubfolder MORPHSUBFOLDER\t Optional, specifies subfolder name within '\Import\morphs\female' to place your merged morph",
-		" --author AUTHOR\t Optional, specifies your name, otherwise you are John Doe.",
+		" --looksubfolder LOOKSUBFOLDER\t Optional, specifies subfolder name within '/Saves/Person/appearance' to place new Look containing merged morph",
+		" --morphsubfolder MORPHSUBFOLDER\t Optional, specifies subfolder within '/Import/morphs/male', or  '/Import/morphs/female', to place your merged morph",
+		" --author AUTHOR\t Optional, specifies your name, otherwise you are 'John Doe'.",
 		"",
 		"*Note: See extractMorphs.js for details on extracting VAM Morph information.  DO NOT distribute extracted standard morphs.",
 		"Note 2: This morph merger is not intended to work with Genetalia morphs, as they are on a different graft.",
 		""
 		].join("\r\n"));
 }
+
 
 if(!argv.inputfile || !argv.outputmorph || !argv.vambase){
 	usage();
@@ -78,7 +81,7 @@ var newMorph = {
 				"step_size" : 0.01
 			},
 			"region" : "!Morph Merger",
-			"group" : "Morph Merger",
+			"group" : "!Morph Merger",
 			"morph" : {
 				"vertex_count" : 21556,
 				"deltas" : {
@@ -121,8 +124,20 @@ const ignore2 = (file, stats)=>{
 	}
 }
 
-var modifiers = {}, 
+const ignore3 = (file, stats)=>{
+	if(stats.isDirectory()) return false;
+	var ext = path.extname(file);
+	if(ext.toLowerCase() == ".vmb"){
+		return false;
+	}else{
+		return true;
+	}
+}
+
+var modifiers = {},
+	modifiers2 = {},
 	vamModifiers = {},
+	vmbModifiers = {},
 	categories = {},
 	promises = [],
 	vamPromises = [];
@@ -138,6 +153,7 @@ var vamMorphPromise = new Promise((resolve,reject)=>{
 				vamPromises.push(promisify(fs.readFile)(file).then(data=>{
 					var morph = JSON.parse(data);
 					var morphId = morph.overrideName || morph.displayName;
+					var morphName = morph.morphName;
 					if(modifiers[morphId]){
 						// console.error("Duplicate morph found - " + morphId + "(" + filename + ").  Already found in " + modifiers[morphId].filename);
 					}else{
@@ -203,7 +219,7 @@ var vamMorphPromise = new Promise((resolve,reject)=>{
 									]
 								});
 							}else{
-								console.log("Unknown target type " + formula.targetType + " for morph " + morphId + " and target " + formula.target);
+								// console.log("Unknown target type " + formula.targetType + " for morph " + morphId + " and target " + formula.target);
 								// Unknown Target Type
 							}
 						});
@@ -217,7 +233,8 @@ var vamMorphPromise = new Promise((resolve,reject)=>{
 								}
 							},
 							formulas : formulas
-						}
+						};
+						modifiers2[morphName] = modifiers[morphId];
 					}
 					// console.log(morph);
 				}));
@@ -255,24 +272,24 @@ var customMorphPromise = new Promise((resolve,reject)=>{
 									type : "custom",
 									modifier : modifier,
 									morph : modifier.morph,
-									formulas : modifier.formulas
+									formulas : modifier.formulas	
 								}
 								if(modifier.Region && !modifier.region) modifier.region = modifier.Region;
 								if(modifier.region){
 									categories[modifier.region] = categories[modifier.region] || {};
-									categories[modifier.region][morphId] = modifiers[morphId];
+									categories[modifier.region][morphId] = modifiers[morphId];									
 								}else{
 									categories[modifier.group] = categories[modifier.group] || {};
-									categories[modifier.group][morphId] = modifiers[morphId];
+									categories[modifier.group][morphId] = modifiers[morphId];								
 								}
 							}
 							// console.log(morphId);
 						}
 					}else{
-						throw("No modifiers in morph " + file);
+						throw("No modifiers in morph " + filename);
 					}
 				}catch(e){
-					console.error("Error parsing " + file);
+					console.error("Error parsing " + filename + " Is it compressed ?");
 				}
 			})
 			.catch(err=>{
@@ -285,14 +302,93 @@ var customMorphPromise = new Promise((resolve,reject)=>{
 	});
 });
 
+/*
+VMB Morphs
+*/
+var vmbMorphPromise = new Promise((resolve,reject)=>{
+	var vmbFiles = recursive(argv.vambase + "/Import/Morphs", [ignore3]);
+	vmbFiles.then(vmbFiles=>{
+		var vmbPromises = [];
+		var deltas = [];
+		for(file of vmbFiles){
+			let filename = file;
+			let vmiFile = file.replace(/\.[^/.]+$/, "") + ".vmi";
+			var morphPromise = Promise.all([
+				promisify(fs.readFile)(file),
+				promisify(fs.readFile)(vmiFile)
+			]).then(data=>{
+				var vmbData = data[0];
+				var vmiData = data[1];
+				var offset = 0;
+				var vertexCount = vmbData.readInt32LE(offset);
+				offset+=4;
+				var verts = (vmbData.length - 4)/16;
+				if(verts != vertexCount){
+					console.error("Header byte says there should be " + vertexCount + " vertices but file size does not match.");
+					return 1;
+				}
+				while(offset<vmbData.length){
+					// Vertex Index
+					var index = vmbData.readInt32LE(offset);
+					offset +=4;
+					// X
+					var x = vmbData.readFloatLE(offset);
+					offset +=4;
+					// Y
+					var y = vmbData.readFloatLE(offset);
+					offset +=4;
+					// Z
+					var z = vmbData.readFloatLE(offset);
+					offset +=4;
+					deltas.push([
+						index, x, y, z
+					]);
+				}
+				var info = JSON.parse(vmiData);
+				vmbModifiers[info.id] = {
+					filename : filename,
+					vmi : info,
+					vmb : deltas
+				};
+				return vmbModifiers[info.id];
+			})
+			vmbPromises.push(morphPromise);
+		}
+		Promise.all(vmbPromises).then(data=>{
+			resolve(data);
+		});
+	});
+});
+
 // First read all morphs to get file paths
-Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
+Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>{
 	var data = allData[0];
-	var i = 0;
+	var i = 0, j = 0;
 	for(modifier in modifiers){
 		i++;
 	}
+	for(var m in vmbModifiers){
+		var vmb = vmbModifiers[m];
+		j++;
+		var formulas = [];
+		vmb.vmi.formulas.map(formula=>{
+			// TODO
+		});
+		modifiers[vmb.vmi.id] = modifiers[vmb.vmi.id] || {
+			filename : vmb.filename,
+			type : "vmb",
+			modifier : {},
+			morph : {
+				deltas : {
+					values : vmb.vmb
+				}
+			},
+			formulas : formulas
+		};
+		
+	}
 	console.log(i + " morphs indexed.");
+	console.log(j + " VMBs indexed.");
 	// Category analysis left over from another script.  Not really important here.
 	for(category in categories){
 		// console.log(" - " + category);
@@ -302,14 +398,19 @@ Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
 	}
 	
 	if(look.atoms){
+		console.log("Parsing look file: '" + argv.inputfile + "'");
 		for(atom of look.atoms){
 			if(atom.type == "Person"){
-				console.log("Person found: '" + atom.id + "'");
+				console.log("Found Person atom with ID: '" + atom.id + "'");
 				for(storable of atom.storables){
 					if(storable.morphs){
-						console.log("Found Morphs");
+						console.log("Found Morph storables");
 						var newMorphs = [];
 						var newFormulas = {};
+						var morphHash = {};
+						for(morph of storable.morphs){
+							morphHash[morph.name] = morph;
+						}
 						for(morph of storable.morphs){
 							if(!modifiers[morph.name]){
 								newMorphs.push(morph);
@@ -331,6 +432,9 @@ Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
 									
 									var morphFormulas = modifiers[morph.name].formulas;
 									if(morphFormulas){
+										var i = 0;
+										for(formula of morphFormulas) i++;
+										console.log("Analyzing " + i + " formulas in " + morph.name);
 										for(formula of morphFormulas){
 											var url = "";
 											var value = 0.0;
@@ -343,12 +447,33 @@ Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
 											var outputQuerystring = (formula.output + "?").split("?")[1];
 											var pass = true;
 											if(outputQuerystring == "value"){
-												console.log("Checking '" + outputQuerystring + "'...");
+												// console.log("Checking '" + outputQuerystring + "'...");
 												try{
 													var mn = formula.output.split("#")[1].split("?")[0];
-													if(modifiers[mn]){
+													if(morphHash[mn]){
 														pass = false;
 														console.log("Not applying value formula, as morph '" + mn + "' is already present in Look file.");
+													}else{
+														if(modifiers2[mn]){
+															if(argv.bakeformulas){
+																console.log("Baking formula in with morph '" + mn + "' vertices");
+																// This really should be recursive but it's late.
+																console.log(JSON.stringify(formula));
+																if(modifiers2[mn].morph){	// It IS possible to not have a morph section in a DSF modifier
+																	var morphDelta = modifiers2[mn].morph.deltas.values;
+																	console.log("Baking " + modifiers2[mn].morph.deltas.values.length + " vertex changes from " +  mn);
+																	for(delta of morphDelta){
+																		var deltaDelta = [delta[0],delta[1] * value, delta[2] * value, delta[3] * value];
+																		deltas[delta[0]][1]+=deltaDelta[1];
+																		deltas[delta[0]][2]+=deltaDelta[2];
+																		deltas[delta[0]][3]+=deltaDelta[3];
+																		pass = false;
+																	}
+																}
+															}
+														}else{
+															console.log("Couldn't find '" + mn + "' morph to convert.  Leaving as a formula.");
+														}
 													}
 												}catch(e){
 													console.log(e);
@@ -369,7 +494,7 @@ Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
 														if(outputQuerystring == "center_point/y" || outputQuerystring == "orientation/y" ||
 															outputQuerystring == "center_point/z" || outputQuerystring == "orientation/z" ||
 															outputQuerystring == "center_point/x" || outputQuerystring == "orientation/x"){
-															console.log(morph.name + " - " + formulaKey + "from " + operation.val + "to " + value);
+															// console.log(morph.name + " - " + formulaKey + "from " + operation.val + "to " + value);
 															operation.val += value;
 														}else{
 															operation.val += value;
@@ -398,8 +523,22 @@ Promise.all([vamMorphPromise,customMorphPromise]).then(allData=>{
 						}
 						let morphData = JSON.stringify(newMorph,null,"\t");
 						let lookData = JSON.stringify(look,null,"\t");
-						var morphFolder = argv.vambase+"/Import/Morphs/female/" + argv.morphsubfolder + "/";
-						var lookFolder = argv.vambase+"/Saves/Person/appearance/" + argv.looksubfolder + "/";
+						if(argv.morphsubfolder){
+							var morphFolder = argv.vambase+"/Import/Morphs/" + (argv.gender || "female") + "/" + argv.morphsubfolder + "/";
+						} else {
+							var morphFolder = argv.vambase+"/Import/Morphs/" + (argv.gender || "female") +"/";
+						}
+						if (!fs.existsSync(morphFolder)){
+							fs.mkdirSync(morphFolder);
+						}
+						if(argv.looksubfolder){						
+							var lookFolder = argv.vambase+"/Saves/Person/appearance/" + argv.looksubfolder + "/";
+						} else {
+							var lookFolder = argv.vambase+"/Saves/Person/appearance/";
+						}
+						if (!fs.existsSync(lookFolder)){
+							fs.mkdirSync(lookFolder);
+						}						
 						fs.writeFileSync( morphFolder + argv.outputmorph + ".dsf" , morphData); 
 						try{
 							// Delete any VAM morph cache
