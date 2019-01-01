@@ -455,7 +455,7 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 														console.log("Not applying value formula, as morph '" + mn + "' is already present in Look file.");
 													}else{
 														if(modifiers2[mn]){
-															if(argv.bakeformulas){
+															if(argv.bakeformulas=="true"){
 																console.log("Baking formula in with morph '" + mn + "' vertices");
 																// This really should be recursive but it's late.
 																console.log(JSON.stringify(formula));
@@ -463,12 +463,16 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 																	var morphDelta = modifiers2[mn].morph.deltas.values;
 																	console.log("Baking " + modifiers2[mn].morph.deltas.values.length + " vertex changes from " +  mn);
 																	for(delta of morphDelta){
-																		var deltaDelta = [delta[0],delta[1] * value, delta[2] * value, delta[3] * value];
+																		var val = value * morph.value;
+																		var deltaDelta = [delta[0],delta[1] * val, delta[2] * val, delta[3] * val];
 																		deltas[delta[0]][1]+=deltaDelta[1];
 																		deltas[delta[0]][2]+=deltaDelta[2];
 																		deltas[delta[0]][3]+=deltaDelta[3];
 																		pass = false;
 																	}
+																}
+																if(modifiers2[mn].formulas && modifiers2[mn].length>0){
+																	console.log("Warning.  More formulas to compute, not supported yet.");
 																}
 															}
 														}else{
