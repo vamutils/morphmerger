@@ -18,6 +18,7 @@ const usage = ()=>{
 		"    Do not use a file extension. A .dsf Morph and .json Look will be created for you.",
 		" --gender male/female\t Optional, specify your output morphs gender.  Default is female.",
 		" --bakeformulas true/false\t Optional, specify whether you want to bake in morph value formulas.  Default is false.",
+		" --strip true/false\t Optional, specify whether you want to strip out animatable/min/max leftovers in new Look.  Default is false.",
 		" --vammorphpath VAMMORPHPATH\t Optional, specified path to Standard VAM morph JSON extracts*",
 		" --looksubfolder LOOKSUBFOLDER\t Optional, specifies subfolder name within '/Saves/Person/appearance' to place new Look containing merged morph",
 		" --morphsubfolder MORPHSUBFOLDER\t Optional, specifies subfolder within '/Import/morphs/male', or  '/Import/morphs/female', to place your merged morph",
@@ -511,8 +512,12 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 									}
 									
 								}else{
-									// Probably a min/max override or something is animatable.  Leave it in the look
-									// newMorphs.push(morph);
+									if(argv.strip=="true"){
+										// Don't leave min/max/animatable to the Look
+									}else{
+										// Leave it in the look
+										newMorphs.push(morph);
+									}
 								}
 							}								
 						}
