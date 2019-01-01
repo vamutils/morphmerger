@@ -310,7 +310,6 @@ var vmbMorphPromise = new Promise((resolve,reject)=>{
 	var vmbFiles = recursive(argv.vambase + "/Import/Morphs", [ignore3]);
 	vmbFiles.then(vmbFiles=>{
 		var vmbPromises = [];
-		var deltas = [];
 		for(file of vmbFiles){
 			let filename = file;
 			let vmiFile = file.replace(/\.[^/.]+$/, "") + ".vmi";
@@ -320,6 +319,7 @@ var vmbMorphPromise = new Promise((resolve,reject)=>{
 			]).then(data=>{
 				var vmbData = data[0];
 				var vmiData = data[1];
+				var deltas = [];
 				var offset = 0;
 				var vertexCount = vmbData.readInt32LE(offset);
 				offset+=4;
@@ -342,7 +342,7 @@ var vmbMorphPromise = new Promise((resolve,reject)=>{
 					var z = vmbData.readFloatLE(offset);
 					offset +=4;
 					deltas.push([
-						index, x, y, z
+						index, x * 100, y * 100, z * 100
 					]);
 				}
 				var info = JSON.parse(vmiData);
@@ -375,7 +375,7 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 		vmb.vmi.formulas.map(formula=>{
 			// TODO
 		});
-		modifiers[vmb.vmi.id] = modifiers[vmb.vmi.id] || {
+		modifiers[vmb.vmi.displayName] = modifiers[vmb.vmi.displayName] || {
 			filename : vmb.filename,
 			type : "vmb",
 			modifier : {},
@@ -386,7 +386,6 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 			},
 			formulas : formulas
 		};
-		
 	}
 	console.log(i + " morphs indexed.");
 	console.log(j + " VMBs indexed.");
@@ -416,12 +415,15 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 							if(!modifiers[morph.name]){
 								newMorphs.push(morph);
 								console.log("Morph '" + morph.name + "' not found in custom or standard morphs.  Not computing, and leaving reference in new Look file.");
+							}else if(morph.name=="Nipples"){
+								console.log("Ignoring Nipples  (VAM will re-apply them and make them longer than original otherwise.");
+								newMorphs.push(morph);
 							}else{
 								if(morph.value != undefined){
-									console.log("Custom Morph '" + morph.name + "' used with a value of " + morph.value + "...");
+									// console.log("Custom Morph '" + morph.name + "' used with a value of " + morph.value + "...");
 									if(modifiers[morph.name].morph){	// It IS possible to not have a morph section in a DSF modifier
 										var morphDelta = modifiers[morph.name].morph.deltas.values;
-										console.log("Applying " + modifiers[morph.name].morph.deltas.values.length + " vertex changes from " + morph.name);
+										console.log("Applying " + modifiers[morph.name].morph.deltas.values.length + " vertex changes from " + modifiers[morph.name].type + " morph '" + morph.name + "' with a morph value of " + morph.value);
 										for(delta of morphDelta){
 											var deltaDelta = [delta[0],delta[1] * morph.value, delta[2] * morph.value, delta[3] * morph.value];
 											
@@ -435,7 +437,7 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 									if(morphFormulas){
 										var i = 0;
 										for(formula of morphFormulas) i++;
-										console.log("Analyzing " + i + " formulas in " + morph.name);
+										if(i>0) console.log("Analyzing " + i + " formulas in " + morph.name);
 										for(formula of morphFormulas){
 											var url = "";
 											var value = 0.0;
@@ -565,4 +567,5 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 		console.error("Bad VAM file");
 	}
 	
+});
 });
