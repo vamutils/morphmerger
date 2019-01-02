@@ -567,5 +567,4 @@ Promise.all([vamMorphPromise,customMorphPromise,vmbMorphPromise]).then(allData=>
 		console.error("Bad VAM file");
 	}
 	
-});
-});
+})
