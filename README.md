@@ -63,3 +63,6 @@ Options:
 *Note:* See extractMorphs.js for details on extracting VAM Morph information.  DO NOT distribute extracted standard morphs.
 *Note 2:* This morph merger is not intended to work with Genetalia morphs, as they are on a different graft.
 ```
+
+## Sample Command:
+`node merge.js --vambase=c:\vam --bakeformulas=true --gender=female --vammorphpath=extracts --looksubfolder=!Propel --morphsubfolder=!Propel --inputfile=c:\vam\Saves\Person\appearance\somelook.json --outputmorph="My Morph Name" --strip=true`
