@@ -15,14 +15,14 @@ You are responsible for reviewing and testing any scripts you run thoroughly bef
 
 ## Prerequisites
 
-- Node installed [Node JS](https://nodejs.org/en/download/)
+- Node installed [Node JS](https://nodejs.org/en/download/) - Version 10 works.  Reports that older versions do not, so I recommend to use 10.15.0 or higher.
 - This repository cloned/downloaded and extracted into a folder.
 - *Optional:* [Unity Asset Bundle Extractor](https://github.com/DerPopo/UABE/releases) downloaded.  Only needed if you want to extract standard VAM Morph information for use in Morph Merging.
 - *Optional:* DSF Toolbox downloaded to decompress and custom morphs that are in compressed format.
 
 ## First One-Time Setup command
 
-- Navigate to the folder where you have cloned/downloaded this repository.  Run `npm install` to download the require `node_modules`  This should take less than 30 seconds.
+- From the Windows Command Prompt, navigate to the folder where you have cloned/downloaded this repository.  Run `npm install` to download the required `node_modules`  This should take less than 30 seconds.
 
 ## *Optional* One-Time standard Morph Extraction Steps
 
@@ -50,19 +50,25 @@ The script will also write out a new Look file of the same name as the morph fil
 
 Usage: node merge.js [options]
 
-Options:
- --vambase VAMPATH Required, specifies base VAM path.
- --inputfile INPUTFILE Required, specifies input Look .json file to evaluate
- --outputmorph OUTPUTMORPH Required, specifies your output morph file name.
-    Do not leave use a file extension.  A.dsf Morph and starter .json Look will be created for you.
- --vammorphpath VAMMORPHPATH Optional, specified path to Standard VAM morph JSON extracts
- --looksubfolder LOOKSUBFOLDER Optional, specifies subfolder name within '\Saves\Person\appearance' to place new Look containing merged morph
- --morphsubfolder MORPHSUBFOLDER Optional, specifies subfolder name within '\Import\morphs\female' to place your merged morph
- --author AUTHOR Optional, specifies your name, otherwise you are John Doe.
+Example: 
+node merge.js --vambase=c:\vam --bakeformulas=true --gender=female --vammorphpath=extracts --looksubfolder=!Propel --morphsubfolder=MyMorphs --inputfile=c:\vam\Saves\Person\appearance\somelook.json --outputmorph="My Morph Name" --strip=true
+```
+
+## Options Explained
+| Option | Required? | Default | Description |
+|--------|-----------|---------|-------------|
+| `--vambase` | Yes    |         | Specifies base VAM path |
+| `--inputfile` | Yes    |         | Specifies input Look .json file to evaluate |
+| `--outputmorph` | Yes    |         | Specifies your output morph file name.  *Do not use a file extension, they will be created for you.* |
+| `--vammorphpath` | Yes | | Specifies path to Standard VAM morph JSON extracts.  This folder must exist! |
+| `--morphsubfolder` | Yes | | Specifies subfolder name within `<vambase>\Import\morphs\female` to place your merged morph.  This folder must exist! |
+| `--looksubfolder` | Yes | | Specifies sub-folder name within `<vambase>\Saves\Person\appearance` to place new Look containing merged morph.  This folder must exist! |
+| `--author` | Optional | `John Doe` | Specifies your name |
+| `--bakeformulas` | Optional | `false` | Specify whether you want to bake in morph value formulas.  Valid values are `true` or `false` |
+| `--strip` | Optional | `true` | Specify whether you want to bake in morph value formulas. Valid values are `true` or `false` |
+| `--onlyface` | Optional | `false` | specify whether to just export the face vertices.  Valid values are `true` or `false` |
 
 *Note:* See extractMorphs.js for details on extracting VAM Morph information.  DO NOT distribute extracted standard morphs.
 *Note 2:* This morph merger is not intended to work with Genetalia morphs, as they are on a different graft.
-```
 
-## Sample Command:
-`node merge.js --vambase=c:\vam --bakeformulas=true --gender=female --vammorphpath=extracts --looksubfolder=!Propel --morphsubfolder=!Propel --inputfile=c:\vam\Saves\Person\appearance\somelook.json --outputmorph="My Morph Name" --strip=true`
+
